@@ -1,5 +1,11 @@
 # DoubanMovie-React-Native
 
+## How does it look like ?
+
+![](./screenshot/screenshot-1.png)  
+
+![](./screenshot/screenshot-2.png)
+
 ## How to run ? 
 
 1. [Setup](http://facebook.github.io/react-native/docs/getting-started.html#content) React Native develope environment
