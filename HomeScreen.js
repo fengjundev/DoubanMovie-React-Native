@@ -18,159 +18,40 @@ var ProgressBar = require('ProgressBarAndroid');
 var MovieCell = require('./MovieCell');
 var RatingBar = require('./RatingBar');
 var SwipeRefreshLayoutAndroid = require('./SwipeRefreshLayout');
+var ScrollableTabView = require('react-native-scrollable-tab-view');
+var InTheatersPage = require('./InTheatersPage');
 
 var PARAM_API_KEY = "apikey";
 var DOU_BAN_API_KEY = "00aefce4d06e0bb7020cf6ae714a2325";
 var API_HOT_MOVIES_URL = "https://api.douban.com/v2/movie/in_theaters";
+var API_COMING_MOVIES_URL = "https://api.douban.com/v2/movie/coming_soon";
+var API_US_MOVIES_URL = "https://api.douban.com/v2/movie/top250";
 
 var toolbarActions = [];
 
+var deviceWidth = Dimensions.get('window').width;
+
+
 var HomeScreen = React.createClass({
 
-	getInitialState: function() {
-  		return {
-      		isFirstLoading: false,
-      		dataSource: new ListView.DataSource({
-        		rowHasChanged: (row1, row2) => row1 !== row2,
-          }),
-    	};
-	},
-
-	componentDidMount: function() {
-      this.setState({
-          isFirstLoading: true,
-      });
-    	this.requestHotMovies();
-  },
-
-  getHotMoviesUrl: function(){
-    return API_HOT_MOVIES_URL + '?' + PARAM_API_KEY + '=' + DOU_BAN_API_KEY;
-  },
-
-  onRefresh: function() {
-    this.requestHotMovies();
-  },
-
-  requestHotMovies: function() {
-    	fetch(this.getHotMoviesUrl())
-      		.then((response) => response.json())
-      		.catch((error) => {
-        		this.setState({
-          			dataSource: this.getDataSourSce([]),
-          			isFirstLoading: false,
-        		});        
-      		})
-      		.then((responseData) => {
-       			this.setState({
-          		isFirstLoading: false,
-          		dataSource: this.getDataSource(responseData.subjects),
-        	});
-            if(this.swipeRefreshLayout){
-              this.swipeRefreshLayout.finishRefresh();
-            }
-      }).done();
-  	},
-
-  getDataSource: function(subjects: Array<any>): ListView.DataSource {
-    	return this.state.dataSource.cloneWithRows(subjects);
-  },
-
-  renderListView: function (){
-    var title = '正在上映';
-    return (
-      <View style={styles.outSideContainer}>
-      <ToolbarAndroid
-            title={title}
-            titleColor='#61a972'
-            style={styles.toolbar}
-            actions={toolbarActions}
-            onIconClicked={() => this.refs[DRAWER_REF].openDrawer()}
-            onActionSelected={this.onActionSelected} />
-      <View style={styles.titleBarSplitLine}/>
-      <SwipeRefreshLayoutAndroid
-            ref = {(swipeRefreshLayout) => 
-              { this.swipeRefreshLayout = swipeRefreshLayout; }
-            }
-            onRefresh={this.onRefresh}>
-            <ListView
-              ref="listview"
-              renderSeparator={this.renderSeparator}
-              dataSource={this.state.dataSource}
-              renderRow={this.renderMovieRow}
-              onEndReached={this.onEndReached}
-              automaticallyAdjustContentInsets={false}
-              keyboardDismissMode="on-drag"
-              keyboardShouldPersistTaps={true}
-              showsVerticalScrollIndicator={false} />
-      </SwipeRefreshLayoutAndroid>
-      </View>
-
-      
-      );
-  },
-
-  renderMovieRow: function(
-    movie: Object,
-    sectionID: number | string,
-    rowID: number | string,
-    highlightRowFunc: (sectionID: ?number | string, rowID: ?number | string) => void) {
-    return (
-      <MovieCell
-        key={movie.id}
-        onSelect={() => this.selectMovie(movie)}
-        onHighlight={() => highlightRowFunc(sectionID, rowID)}
-        onUnhighlight={() => highlightRowFunc(null, null)}
-        movie={movie} />
-    );
-  },
-
-  renderSeparator: function(
-    sectionID: number | string,
-    rowID: number | string,
-    adjacentRowHighlighted: boolean
-  ) {
-    var style = styles.rowSeparator;
-    if (adjacentRowHighlighted) {
-        style = [style, styles.rowSeparatorHide];
-    }
-    return (
-      <View key={'SEP_' + sectionID + '_' + rowID}  style={style}/>
-    );
-  },
-
-  selectMovie: function(movie){
-    this.props.navigator.push({
-        title: movie.title,
-        name: 'detail',
-        movie: movie,
-    });
-  },
-
-  renderLoadingView: function(){
-    var title = '正在上映';
-    return (
-      <View style={styles.outSideContainer}>
-      <ToolbarAndroid
-            title={title}
-            titleColor='#61a972'
-            style={styles.toolbar}
-            actions={toolbarActions}
-            onIconClicked={() => this.refs[DRAWER_REF].openDrawer()}
-            onActionSelected={this.onActionSelected} />
-      <View style={styles.titleBarSplitLine}/>
-      <View style={styles.container}>
-        <ProgressBar styleAttr="Large"  />
-        <Text style={styles.loadingText}>正在努力加载</Text>
-      </View>
-      </View>
-      );
-  },
-
   render: function () {
-    if(this.state.isFirstLoading){
-      return this.renderLoadingView();
-    }
-    return this.renderListView();
+    var title = 'Douban';
+    return (
+      <View style={styles.outSideContainer}>
+      <ToolbarAndroid
+            title={title}
+            titleColor='#61a972'
+            style={styles.toolbar}
+            actions={toolbarActions}
+            onActionSelected={this.onActionSelected} />
+      <View style={styles.titleBarSplitLine}/>
+      <ScrollableTabView>
+        <InTheatersPage style={{flex: 1, width: deviceWidth}} navigator={this.props.navigator} url={API_HOT_MOVIES_URL} tabLabel="正在热映" />
+        <InTheatersPage style={{flex: 1, width: deviceWidth}} navigator={this.props.navigator} url={API_COMING_MOVIES_URL} tabLabel="即将上映" />
+        <InTheatersPage style={{flex: 1, width: deviceWidth}} navigator={this.props.navigator} url={API_US_MOVIES_URL} tabLabel="排行榜" />
+      </ScrollableTabView>
+      </View>
+      );
   },
 
 });

@@ -40,15 +40,11 @@
  */
 - (void)didUpdateFrame:(RCTFrameUpdate *)update;
 
+@optional
+
 /**
  * Synthesize and set to true to pause the calls to -[didUpdateFrame:]
  */
-@property (nonatomic, readonly, getter=isPaused) BOOL paused;
-
-/**
- * Callback for pause/resume observer.
- * Observer should call it when paused property is changed.
- */
-@property (nonatomic, copy) dispatch_block_t pauseCallback;
+@property (nonatomic, assign, getter=isPaused) BOOL paused;
 
 @end
