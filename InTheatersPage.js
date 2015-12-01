@@ -17,7 +17,6 @@ var {
 var ProgressBar = require('ProgressBarAndroid');
 var MovieCell = require('./MovieCell');
 var RatingBar = require('./RatingBar');
-var SwipeRefreshLayoutAndroid = require('./SwipeRefreshLayout');
 
 var PARAM_API_KEY = "apikey";
 var DOU_BAN_API_KEY = "00aefce4d06e0bb7020cf6ae714a2325";
@@ -81,12 +80,7 @@ var InTheatersPage = React.createClass({
   renderListView: function (){
     return (
       <View style={styles.outSideContainer}>
-      <SwipeRefreshLayoutAndroid
-            ref = {(swipeRefreshLayout) => 
-              { this.swipeRefreshLayout = swipeRefreshLayout; }
-            }
-            onRefresh={this.onRefresh}>
-            <ListView
+           <ListView
               ref="listview"
               renderSeparator={this.renderSeparator}
               dataSource={this.state.dataSource}
@@ -96,7 +90,6 @@ var InTheatersPage = React.createClass({
               keyboardDismissMode="on-drag"
               keyboardShouldPersistTaps={true}
               showsVerticalScrollIndicator={false} />
-      </SwipeRefreshLayoutAndroid>
       </View>
 
       

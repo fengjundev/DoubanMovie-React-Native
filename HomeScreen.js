@@ -18,7 +18,6 @@ var ProgressBar = require('ProgressBarAndroid');
 var MovieCell = require('./MovieCell');
 var RatingBar = require('./RatingBar');
 var SwipeRefreshLayoutAndroid = require('./SwipeRefreshLayout');
-var ScrollableTabView = require('react-native-scrollable-tab-view');
 var InTheatersPage = require('./InTheatersPage');
 
 var PARAM_API_KEY = "apikey";
@@ -45,11 +44,7 @@ var HomeScreen = React.createClass({
             actions={toolbarActions}
             onActionSelected={this.onActionSelected} />
       <View style={styles.titleBarSplitLine}/>
-      <ScrollableTabView>
-        <InTheatersPage style={{flex: 1, width: deviceWidth}} navigator={this.props.navigator} url={API_HOT_MOVIES_URL} tabLabel="正在热映" />
-        <InTheatersPage style={{flex: 1, width: deviceWidth}} navigator={this.props.navigator} url={API_COMING_MOVIES_URL} tabLabel="即将上映" />
-        <InTheatersPage style={{flex: 1, width: deviceWidth}} navigator={this.props.navigator} url={API_US_MOVIES_URL} tabLabel="排行榜" />
-      </ScrollableTabView>
+      <InTheatersPage style={{flex: 1, width: deviceWidth}} navigator={this.props.navigator} url={API_HOT_MOVIES_URL} tabLabel="正在热映" />
       </View>
       );
   },
