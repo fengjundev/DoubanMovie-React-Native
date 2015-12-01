@@ -5,7 +5,6 @@ var React = require('react-native');
 
 var {
 	View,
-	ToolbarAndroid,
 	StyleSheet,
 	Text,
 	Image,
@@ -20,6 +19,7 @@ var ProgressBar = require('ProgressBarAndroid');
 var toolbarActions = [];
 var coverWidth = Dimensions.get('window').width / 2.2;
 var coverHeight = Dimensions.get('window').height / 2.5;
+var TitleBar = require('./TitleBar');
 
 var DetailScreen = React.createClass({
 
@@ -69,13 +69,7 @@ var DetailScreen = React.createClass({
     	var title = this.props.movie.title;
     	return (
      	 <View style={styles.outSideContainer}>
-      	 <ToolbarAndroid
-           	 	title={title}
-            	titleColor='#61a972'
-            	style={styles.toolbar}
-            	actions={toolbarActions}
-            	onIconClicked={() => this.refs[DRAWER_REF].openDrawer()}
-            	onActionSelected={this.onActionSelected} />
+      	 <TitleBar title={this.props.movie.title} />
       	 <View style={styles.titleBarSplitLine}/>
       		<View style={styles.container}>
         	<ProgressBar styleAttr="Large"/>
@@ -92,13 +86,7 @@ var DetailScreen = React.createClass({
   		}
   		return(
   			<View style={styles.outSideContainer}>
-  			<ToolbarAndroid
-            	title='影片详情'
-            	titleColor='#61a972'
-            	style={styles.toolbar}
-            	actions={toolbarActions}
-            	onIconClicked={() => this.refs[DRAWER_REF].openDrawer()}
-            	onActionSelected={this.onActionSelected} />
+  			<TitleBar title={this.props.movie.title} />
             <View style={styles.titleBarSplitLine}/>
   			<ScrollView style={styles.detailContainer} >
   				<View style={styles.detailContainerAbove}>

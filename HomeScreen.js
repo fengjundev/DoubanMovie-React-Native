@@ -14,6 +14,7 @@ var {
 	Image,
 } = React;
 
+var TitleBar = require('./TitleBar');
 var ProgressBar = require('ProgressBarAndroid');
 var MovieCell = require('./MovieCell');
 var RatingBar = require('./RatingBar');
@@ -37,13 +38,7 @@ var HomeScreen = React.createClass({
     var title = 'Douban';
     return (
       <View style={styles.outSideContainer}>
-      <ToolbarAndroid
-            title={title}
-            titleColor='#61a972'
-            style={styles.toolbar}
-            actions={toolbarActions}
-            onActionSelected={this.onActionSelected} />
-      <View style={styles.titleBarSplitLine}/>
+      <TitleBar title={"豆瓣电影"} />
       <InTheatersPage style={{flex: 1, width: deviceWidth}} navigator={this.props.navigator} url={API_HOT_MOVIES_URL} tabLabel="正在热映" />
       </View>
       );

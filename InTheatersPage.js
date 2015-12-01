@@ -8,15 +8,17 @@ var {
     StyleSheet,
     Text,
     Dimensions,
-  ToolbarAndroid,
-  ToastAndroid,
-  ListView,
+    ToolbarAndroid,
+    ToastAndroid,
+    ListView,
     Image,
+    Platform,
+    ProgressViewIOS,
+    ProgressBarAndroid,
 } = React;
 
-var ProgressBar = require('ProgressBarAndroid');
+
 var MovieCell = require('./MovieCell');
-var RatingBar = require('./RatingBar');
 
 var PARAM_API_KEY = "apikey";
 var DOU_BAN_API_KEY = "00aefce4d06e0bb7020cf6ae714a2325";
@@ -25,6 +27,12 @@ var API_HOT_MOVIES_URL = "https://api.douban.com/v2/movie/in_theaters";
 var deviceWidth = Dimensions.get('window').width;
 
 var toolbarActions = [];
+
+var ProgressBar = ProgressBarAndroid;
+if (Platform.OS === 'ios') {
+      ProgressBar = ProgressViewIOS;
+      console.log('============ ProgressViewIOS');
+}
 
 var InTheatersPage = React.createClass({
 
