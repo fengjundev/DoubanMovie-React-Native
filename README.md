@@ -2,9 +2,9 @@
 
 ## How does it look like ?
 
-![](./screenshot/screenshot-1.png)  
+![](./screenshot/screenshot-2.png)  
 
-![](./screenshot/screenshot-2.png)
+![](./screenshot/screenshot-1.png)
 
 ## How to run ? 
 
@@ -15,6 +15,5 @@
 		 `react-native run-android`
 
 
-## TODO
-1. Movie searching
-2. Show movie catagories in `DrawerLayoutAndroid`
+## Update Log
+- *12-01* Support iOS
