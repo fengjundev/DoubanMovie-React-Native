@@ -11,6 +11,7 @@
  */
 'use strict';
 
+var Dimensions = require('Dimensions');
 var NativeModules = require('NativeModules');
 var Platform = require('Platform');
 var RCTDeviceEventEmitter = require('RCTDeviceEventEmitter');
@@ -181,7 +182,7 @@ var ScrollResponderMixin = {
   scrollResponderHandleStartShouldSetResponderCapture: function(e: Event): boolean {
     // First see if we want to eat taps while the keyboard is up
     var currentlyFocusedTextInput = TextInputState.currentlyFocusedField();
-    if (this.props.keyboardShouldPersistTaps === false &&
+    if (!this.props.keyboardShouldPersistTaps &&
       currentlyFocusedTextInput != null &&
       e.target !== currentlyFocusedTextInput) {
       return true;
@@ -242,7 +243,7 @@ var ScrollResponderMixin = {
     // By default scroll views will unfocus a textField
     // if another touch occurs outside of it
     var currentlyFocusedTextInput = TextInputState.currentlyFocusedField();
-    if (this.props.keyboardShouldPersistTaps === false &&
+    if (!this.props.keyboardShouldPersistTaps &&
       currentlyFocusedTextInput != null &&
       e.target !== currentlyFocusedTextInput  &&
       !this.state.observedScrollSinceBecomingResponder &&
@@ -355,13 +356,13 @@ var ScrollResponderMixin = {
       RCTUIManager.dispatchViewManagerCommand(
         React.findNodeHandle(this),
         RCTUIManager.RCTScrollView.Commands.scrollTo,
-        [offsetX, offsetY],
+        [Math.round(offsetX), Math.round(offsetY)],
       );
     } else {
       RCTUIManager.scrollTo(
         React.findNodeHandle(this),
         offsetX,
-        offsetY
+        offsetY,
       );
     }
   },
@@ -426,20 +427,21 @@ var ScrollResponderMixin = {
    * @param {number} height Height of the text input.
    */
   scrollResponderInputMeasureAndScrollToKeyboard: function(left: number, top: number, width: number, height: number) {
+    var keyboardScreenY = Dimensions.get('window').height;
     if (this.keyboardWillOpenTo) {
-      var scrollOffsetY =
-        top - this.keyboardWillOpenTo.endCoordinates.screenY + height +
-        this.additionalScrollOffset;
-
-      // By default, this can scroll with negative offset, pulling the content
-      // down so that the target component's bottom meets the keyboard's top.
-      // If requested otherwise, cap the offset at 0 minimum to avoid content
-      // shifting down.
-      if (this.preventNegativeScrollOffset) {
-        scrollOffsetY = Math.max(0, scrollOffsetY);
-      }
-      this.scrollResponderScrollTo(0, scrollOffsetY);
+      keyboardScreenY = this.keyboardWillOpenTo.endCoordinates.screenY;
     }
+    var scrollOffsetY = top - keyboardScreenY + height + this.additionalScrollOffset;
+
+    // By default, this can scroll with negative offset, pulling the content
+    // down so that the target component's bottom meets the keyboard's top.
+    // If requested otherwise, cap the offset at 0 minimum to avoid content
+    // shifting down.
+    if (this.preventNegativeScrollOffset) {
+      scrollOffsetY = Math.max(0, scrollOffsetY);
+    }
+    this.scrollResponderScrollTo(0, scrollOffsetY);
+
     this.additionalOffset = 0;
     this.preventNegativeScrollOffset = false;
   },
@@ -461,10 +463,6 @@ var ScrollResponderMixin = {
     this.addListenerOn(RCTDeviceEventEmitter, 'keyboardWillHide', this.scrollResponderKeyboardWillHide);
     this.addListenerOn(RCTDeviceEventEmitter, 'keyboardDidShow', this.scrollResponderKeyboardDidShow);
     this.addListenerOn(RCTDeviceEventEmitter, 'keyboardDidHide', this.scrollResponderKeyboardDidHide);
-    warning(this.getInnerViewNode, 'You need to implement getInnerViewNode in '
-       + this.constructor.displayName + ' to get full'
-       + 'functionality from ScrollResponder mixin. See example of ListView and'
-       + ' ScrollView.');
   },
 
   /**
@@ -514,9 +512,9 @@ var ScrollResponderMixin = {
     this.props.onKeyboardDidShow && this.props.onKeyboardDidShow(e);
   },
 
-  scrollResponderKeyboardDidHide: function() {
+  scrollResponderKeyboardDidHide: function(e: Event) {
     this.keyboardWillOpenTo = null;
-    this.props.onKeyboardDidHide && this.props.onKeyboardDidHide();
+    this.props.onKeyboardDidHide && this.props.onKeyboardDidHide(e);
   }
 
 };

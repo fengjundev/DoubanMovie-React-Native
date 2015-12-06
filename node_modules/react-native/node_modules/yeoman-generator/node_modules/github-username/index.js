@@ -19,11 +19,8 @@ module.exports = function (email, token, cb) {
 		headers: {
 			'user-agent': 'https://github.com/sindresorhus/github-username'
 		}
-	}, function (err, data) {
-		if (err) {
-			cb(err);
-			return;
-		}
+	}).then(function (result) {
+		var data = result.body;
 
 		if (data.total_count === 0) {
 			cb(new Error('Couldn\'t find a username for the supplied email'));
@@ -31,5 +28,5 @@ module.exports = function (email, token, cb) {
 		}
 
 		cb(null, data.items[0].login);
-	});
+	}).catch(cb);
 };

@@ -117,7 +117,7 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
 
 - (RCTScrollEvent *)coalesceWithEvent:(RCTScrollEvent *)newEvent
 {
-  NSArray *updatedChildFrames = [_userData[@"updatedChildFrames"] arrayByAddingObjectsFromArray:newEvent->_userData[@"updatedChildFrames"]];
+  NSArray<NSDictionary *> *updatedChildFrames = [_userData[@"updatedChildFrames"] arrayByAddingObjectsFromArray:newEvent->_userData[@"updatedChildFrames"]];
 
   if (updatedChildFrames) {
     NSMutableDictionary *userData = [newEvent->_userData mutableCopy];
@@ -144,6 +144,7 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
 
 @property (nonatomic, copy) NSIndexSet *stickyHeaderIndices;
 @property (nonatomic, assign) BOOL centerContent;
+@property (nonatomic, strong) UIRefreshControl *refreshControl;
 
 @end
 
@@ -352,6 +353,15 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
   return hitView ?: [super hitTest:point withEvent:event];
 }
 
+- (void)setRefreshControl:(UIRefreshControl *)refreshControl
+{
+  if (_refreshControl) {
+    [_refreshControl removeFromSuperview];
+  }
+  _refreshControl = refreshControl;
+  [self addSubview:_refreshControl];
+}
+
 @end
 
 @implementation RCTScrollView
@@ -360,7 +370,7 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
   RCTCustomScrollView *_scrollView;
   UIView *_contentView;
   NSTimeInterval _lastScrollDispatchTime;
-  NSMutableArray *_cachedChildFrames;
+  NSMutableArray<NSValue *> *_cachedChildFrames;
   BOOL _allowNextScrollNoMatterWhat;
   CGRect _lastClippedToRect;
 }
@@ -412,7 +422,7 @@ RCT_NOT_IMPLEMENTED(- (instancetype)initWithCoder:(NSCoder *)aDecoder)
   [subview removeFromSuperview];
 }
 
-- (NSArray *)reactSubviews
+- (NSArray<UIView *> *)reactSubviews
 {
   return _contentView ? @[_contentView] : @[];
 }
@@ -471,7 +481,7 @@ RCT_NOT_IMPLEMENTED(- (instancetype)initWithCoder:(NSCoder *)aDecoder)
     return;
   }
 
-  static const CGFloat leeway = 50.0;
+  static const CGFloat leeway = 1.0;
 
   const CGSize contentSize = _scrollView.contentSize;
   const CGRect bounds = _scrollView.bounds;
@@ -564,7 +574,7 @@ RCT_SCROLL_EVENT_HANDLER(scrollViewDidZoom, RCTScrollEventTypeMove)
       (_scrollEventThrottle > 0 && _scrollEventThrottle < (now - _lastScrollDispatchTime))) {
 
     // Calculate changed frames
-    NSArray *childFrames = [self calculateChildFramesData];
+    NSArray<NSDictionary *> *childFrames = [self calculateChildFramesData];
 
     // Dispatch event
     [_eventDispatcher sendScrollEventWithType:RCTScrollEventTypeMove
@@ -579,9 +589,9 @@ RCT_SCROLL_EVENT_HANDLER(scrollViewDidZoom, RCTScrollEventTypeMove)
   RCT_FORWARD_SCROLL_EVENT(scrollViewDidScroll:scrollView);
 }
 
-- (NSArray *)calculateChildFramesData
+- (NSArray<NSDictionary *> *)calculateChildFramesData
 {
-    NSMutableArray *updatedChildFrames = [NSMutableArray new];
+    NSMutableArray<NSDictionary *> *updatedChildFrames = [NSMutableArray new];
     [[_contentView reactSubviews] enumerateObjectsUsingBlock:
      ^(UIView *subview, NSUInteger idx, __unused BOOL *stop) {
 
@@ -842,6 +852,34 @@ RCT_SET_AND_PRESERVE_OFFSET(setScrollIndicatorInsets, UIEdgeInsets);
 - (id)valueForUndefinedKey:(NSString *)key
 {
   return [_scrollView valueForKey:key];
+}
+
+- (void)setOnRefreshStart:(RCTDirectEventBlock)onRefreshStart
+{
+  if (!onRefreshStart) {
+    _onRefreshStart = nil;
+    _scrollView.refreshControl = nil;
+    return;
+  }
+  _onRefreshStart = [onRefreshStart copy];
+
+  if (!_scrollView.refreshControl) {
+    UIRefreshControl *refreshControl = [[UIRefreshControl alloc] init];
+    [refreshControl addTarget:self action:@selector(refreshControlValueChanged) forControlEvents:UIControlEventValueChanged];
+    _scrollView.refreshControl = refreshControl;
+  }
+}
+
+- (void)refreshControlValueChanged
+{
+  if (self.onRefreshStart) {
+    self.onRefreshStart(nil);
+  }
+}
+
+- (void)endRefreshing
+{
+  [_scrollView.refreshControl endRefreshing];
 }
 
 @end

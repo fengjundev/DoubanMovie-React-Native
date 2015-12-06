@@ -46,6 +46,10 @@ is(req, ['html']) // false
 Returns a Boolean if the given `request` has a body, regardless of the
 `Content-Type` header.
 
+Having a body has no relation to how large the body is (it may be 0 bytes).
+This is similar to how file existance works. If a body does exist, then this
+indicates that there is data to read from the Node.js request stream.
+
 ```js
 if (is.hasBody(req)) {
   // read the body, since there is one

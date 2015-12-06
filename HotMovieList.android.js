@@ -56,7 +56,7 @@ var HotMovieList = React.createClass({
     return this.props.url + '?' + PARAM_API_KEY + '=' + DOU_BAN_API_KEY;
   },
 
-  onRefresh: function() {
+  _onRefresh: function() {
     this.setState({
         isFromRefreshing: true,
     });
@@ -96,7 +96,7 @@ var HotMovieList = React.createClass({
       <View style={styles.outSideContainer}>
       <SwipeRefreshLayoutAndroid
             ref={(swipeRefreshLayout) => { this.swipeRefreshLayout = swipeRefreshLayout; }}
-            onRefresh={this.onRefresh}>
+            onRefresh={this._onRefresh}>
            <ListView
               ref="listview"
               renderSeparator={this.renderSeparator}

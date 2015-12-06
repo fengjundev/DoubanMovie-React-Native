@@ -143,7 +143,7 @@ var SearchResultScreen = React.createClass({
       <View style={styles.outSideContainer}>
       <View style={styles.container}>
         <ProgressBar styleAttr="Large"  />
-        <Text style={styles.loadingText}>正在努力加载1</Text>
+        <Text style={styles.loadingText}>刷呀刷呀</Text>
       </View>
       </View>
       );

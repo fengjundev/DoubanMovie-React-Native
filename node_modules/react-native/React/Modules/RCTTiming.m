@@ -12,7 +12,6 @@
 #import "RCTAssert.h"
 #import "RCTBridge.h"
 #import "RCTLog.h"
-#import "RCTSparseArray.h"
 #import "RCTUtils.h"
 
 @interface RCTBridge (Private)
@@ -66,11 +65,12 @@
 
 @implementation RCTTiming
 {
-  RCTSparseArray *_timers;
+  NSMutableDictionary<NSNumber *, RCTTimer *> *_timers;
 }
 
 @synthesize bridge = _bridge;
 @synthesize paused = _paused;
+@synthesize pauseCallback = _pauseCallback;
 
 RCT_EXPORT_MODULE()
 
@@ -78,7 +78,7 @@ RCT_EXPORT_MODULE()
 {
   if ((self = [super init])) {
     _paused = YES;
-    _timers = [RCTSparseArray new];
+    _timers = [NSMutableDictionary new];
 
     for (NSString *name in @[UIApplicationWillResignActiveNotification,
                              UIApplicationDidEnterBackgroundNotification,
@@ -120,7 +120,7 @@ RCT_EXPORT_MODULE()
 
 - (void)stopTimers
 {
-  _paused = YES;
+  self.paused = YES;
 }
 
 - (void)startTimers
@@ -129,18 +129,28 @@ RCT_EXPORT_MODULE()
     return;
   }
 
-  _paused = NO;
+  self.paused = NO;
+}
+
+- (void)setPaused:(BOOL)paused
+{
+  if (_paused != paused) {
+    _paused = paused;
+    if (_pauseCallback) {
+      _pauseCallback();
+    }
+  }
 }
 
 - (void)didUpdateFrame:(__unused RCTFrameUpdate *)update
 {
-  NSMutableArray *timersToCall = [NSMutableArray new];
-  for (RCTTimer *timer in _timers.allObjects) {
+  NSMutableArray<NSNumber *> *timersToCall = [NSMutableArray new];
+  for (RCTTimer *timer in _timers.allValues) {
     if ([timer updateFoundNeedsJSUpdate]) {
       [timersToCall addObject:timer.callbackID];
     }
     if (!timer.target) {
-      _timers[timer.callbackID] = nil;
+      [_timers removeObjectForKey:timer.callbackID];
     }
   }
 
@@ -197,7 +207,7 @@ RCT_EXPORT_METHOD(createTimer:(nonnull NSNumber *)callbackID
 
 RCT_EXPORT_METHOD(deleteTimer:(nonnull NSNumber *)timerID)
 {
-  _timers[timerID] = nil;
+  [_timers removeObjectForKey:timerID];
   if (_timers.count == 0) {
     [self stopTimers];
   }

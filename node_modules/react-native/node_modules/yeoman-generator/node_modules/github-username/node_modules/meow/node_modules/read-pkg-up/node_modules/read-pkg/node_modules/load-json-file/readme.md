@@ -15,9 +15,9 @@ $ npm install --save load-json-file
 ## Usage
 
 ```js
-var loadJsonFile = require('load-json-file');
+const loadJsonFile = require('load-json-file');
 
-loadJsonFile('foo.json').then(function (json) {
+loadJsonFile('foo.json').then(json => {
 	console.log(json);
 	//=> {foo: true}
 });

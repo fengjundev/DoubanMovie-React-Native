@@ -19,9 +19,9 @@ var RCTUIManager = require('NativeModules').UIManager;
 var StyleSheet = require('StyleSheet');
 var View = require('View');
 
-var createReactNativeComponentClass = require('createReactNativeComponentClass');
 var dismissKeyboard = require('dismissKeyboard');
 var merge = require('merge');
+var requireNativeComponent = require('requireNativeComponent');
 
 var RK_DRAWER_REF = 'drawerlayout';
 var INNERVIEW_REF = 'innerView';
@@ -50,15 +50,19 @@ var DRAWER_STATES = [
  * ```
  * render: function() {
  *   var navigationView = (
- *     <Text style={{margin: 10, fontSize: 15, textAlign: 'left'}}>I'm in the Drawer!</Text>
+ *     <View style={{flex: 1, backgroundColor: '#fff'}}>
+ *       <Text style={{margin: 10, fontSize: 15, textAlign: 'left'}}>I'm in the Drawer!</Text>
+ *     </View>
  *   );
  *   return (
  *     <DrawerLayoutAndroid
  *       drawerWidth={300}
  *       drawerPosition={DrawerLayoutAndroid.positions.Left}
  *       renderNavigationView={() => navigationView}>
- *       <Text style={{margin: 10, fontSize: 15, textAlign: 'right'}}>Hello</Text>
- *       <Text style={{margin: 10, fontSize: 15, textAlign: 'right'}}>World!</Text>
+ *       <View style={{flex: 1, alignItems: 'center'}}>
+ *         <Text style={{margin: 10, fontSize: 15, textAlign: 'right'}}>Hello</Text>
+ *         <Text style={{margin: 10, fontSize: 15, textAlign: 'right'}}>World!</Text>
+ *       </View>
  *     </DrawerLayoutAndroid>
  *   );
  * },
@@ -70,6 +74,7 @@ var DrawerLayoutAndroid = React.createClass({
   },
 
   propTypes: {
+    ...View.propTypes,
     /**
      * Determines whether the keyboard gets dismissed in response to a drag.
      *   - 'none' (the default), drags do not dismiss the keyboard.
@@ -216,9 +221,6 @@ var styles = StyleSheet.create({
 });
 
 // The View that contains both the actual drawer and the main view
-var AndroidDrawerLayout = createReactNativeComponentClass({
-  validAttributes: merge(ReactNativeViewAttributes.UIView, DrawerLayoutValidAttributes),
-  uiViewClassName: 'AndroidDrawerLayout',
-});
+var AndroidDrawerLayout = requireNativeComponent('AndroidDrawerLayout', DrawerLayoutAndroid);
 
 module.exports = DrawerLayoutAndroid;

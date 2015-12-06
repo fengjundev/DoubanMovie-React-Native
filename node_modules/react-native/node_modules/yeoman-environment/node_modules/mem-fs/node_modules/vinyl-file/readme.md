@@ -5,7 +5,7 @@
 
 ## Install
 
-```sh
+```
 $ npm install --save vinyl-file
 ```
 
@@ -13,15 +13,14 @@ $ npm install --save vinyl-file
 ## Usage
 
 ```js
-var vinylFile = require('vinyl-file');
-
-var file = vinylFile.readSync('index.js');
+const vinylFile = require('vinyl-file');
+const file = vinylFile.readSync('index.js');
 
 console.log(file.path);
-//=> /Users/sindresorhus/dev/vinyl-file/index.js
+//=> '/Users/sindresorhus/dev/vinyl-file/index.js'
 
 console.log(file.cwd);
-//=> /Users/sindresorhus/dev/vinyl-file
+//=> '/Users/sindresorhus/dev/vinyl-file'
 ```
 
 

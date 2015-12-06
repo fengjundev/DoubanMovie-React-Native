@@ -8,13 +8,11 @@
  */
 'use strict';
 
-const Activity = require('../../Activity');
 const Fastfs = require('../fastfs');
 const ModuleCache = require('../ModuleCache');
 const Promise = require('promise');
 const crawl = require('../crawlers');
-const declareOpts = require('../../lib/declareOpts');
-const getPontentialPlatformExt = require('../../lib/getPlatformExtension');
+const getPlatformExtension = require('../lib/getPlatformExtension');
 const isAbsolutePath = require('absolute-path');
 const path = require('path');
 const util = require('util');
@@ -24,56 +22,47 @@ const ResolutionResponse = require('./ResolutionResponse');
 const HasteMap = require('./HasteMap');
 const DeprecatedAssetMap = require('./DeprecatedAssetMap');
 
-const validateOpts = declareOpts({
-  roots: {
-    type: 'array',
-    required: true,
-  },
-  ignoreFilePath: {
-    type: 'function',
-
-    default: function(){}
-  },
-  fileWatcher: {
-    type: 'object',
-    required: true,
-  },
-  assetRoots_DEPRECATED: {
-    type: 'array',
-    default: [],
-  },
-  assetExts: {
-    type: 'array',
-    required: true,
-  },
-  providesModuleNodeModules: {
-    type: 'array',
-    default: [
-      'react-tools',
-      'react-native',
-      // Parse requires AsyncStorage. They will
-      // change that to require('react-native') which
-      // should work after this release and we can
-      // remove it from here.
-      'parse',
-    ],
-  },
-  platforms: {
-    type: 'array',
-    default: ['ios', 'android'],
-  },
-  cache: {
-    type: 'object',
-    required: true,
-  },
-});
+const defaultActivity = {
+  startEvent: () => {},
+  endEvent: () => {},
+};
 
 class DependencyGraph {
-  constructor(options) {
-    this._opts = validateOpts(options);
+  constructor({
+    activity,
+    roots,
+    ignoreFilePath,
+    fileWatcher,
+    assetRoots_DEPRECATED,
+    assetExts,
+    providesModuleNodeModules,
+    platforms,
+    cache,
+    extensions,
+    mocksPattern,
+    extractRequires,
+  }) {
+    this._opts = {
+      activity: activity || defaultActivity,
+      roots,
+      ignoreFilePath: ignoreFilePath || (() => {}),
+      fileWatcher,
+      assetRoots_DEPRECATED: assetRoots_DEPRECATED || [],
+      assetExts: assetExts || [],
+      providesModuleNodeModules,
+      platforms: platforms || [],
+      cache,
+      extensions: extensions || ['js', 'json'],
+      mocksPattern,
+      extractRequires,
+    };
     this._cache = this._opts.cache;
     this._helpers = new Helpers(this._opts);
-    this.load();
+    this.load().catch((err) => {
+      // This only happens at initialization. Live errors are easier to recover from.
+      console.error('Error building DependencyGraph:\n', err.stack);
+      process.exit(1);
+    });
   }
 
   load() {
@@ -81,15 +70,16 @@ class DependencyGraph {
       return this._loading;
     }
 
-    const depGraphActivity = Activity.startEvent('Building Dependency Graph');
-    const crawlActivity = Activity.startEvent('Crawling File System');
+    const {activity} = this._opts;
+    const depGraphActivity = activity.startEvent('Building Dependency Graph');
+    const crawlActivity = activity.startEvent('Crawling File System');
     const allRoots = this._opts.roots.concat(this._opts.assetRoots_DEPRECATED);
     this._crawling = crawl(allRoots, {
       ignore: this._opts.ignoreFilePath,
-      exts: ['js', 'json'].concat(this._opts.assetExts),
+      exts: this._opts.extensions.concat(this._opts.assetExts),
       fileWatcher: this._opts.fileWatcher,
     });
-    this._crawling.then((files) => Activity.endEvent(crawlActivity));
+    this._crawling.then((files) => activity.endEvent(crawlActivity));
 
     this._fastfs = new Fastfs(
       'JavaScript',
@@ -98,15 +88,21 @@ class DependencyGraph {
       {
         ignore: this._opts.ignoreFilePath,
         crawling: this._crawling,
+        activity: activity,
       }
     );
 
     this._fastfs.on('change', this._processFileChange.bind(this));
 
-    this._moduleCache = new ModuleCache(this._fastfs, this._cache);
+    this._moduleCache = new ModuleCache(
+      this._fastfs,
+      this._cache,
+      this._opts.extractRequires
+    );
 
     this._hasteMap = new HasteMap({
       fastfs: this._fastfs,
+      extensions: this._opts.extensions,
       moduleCache: this._moduleCache,
       assetExts: this._opts.exts,
       helpers: this._helpers,
@@ -119,17 +115,18 @@ class DependencyGraph {
       fileWatcher: this._opts.fileWatcher,
       ignoreFilePath: this._opts.ignoreFilePath,
       assetExts: this._opts.assetExts,
+      activity: this._opts.activity,
     });
 
     this._loading = Promise.all([
       this._fastfs.build()
         .then(() => {
-          const hasteActivity = Activity.startEvent('Building Haste Map');
-          return this._hasteMap.build().then(() => Activity.endEvent(hasteActivity));
+          const hasteActivity = activity.startEvent('Building Haste Map');
+          return this._hasteMap.build().then(() => activity.endEvent(hasteActivity));
         }),
       this._deprecatedAssetMap.build(),
     ]).then(() =>
-      Activity.endEvent(depGraphActivity)
+      activity.endEvent(depGraphActivity)
     );
 
     return this._loading;
@@ -152,15 +149,19 @@ class DependencyGraph {
       const response = new ResolutionResponse();
 
       return Promise.all([
-        req.getOrderedDependencies(response),
+        req.getOrderedDependencies(response, this._opts.mocksPattern),
         req.getAsyncDependencies(response),
       ]).then(() => response);
     });
   }
 
+  matchFilesByPattern(pattern) {
+    return this.load().then(() => this._fastfs.matchFilesByPattern(pattern));
+  }
+
   _getRequestPlatform(entryPath, platform) {
     if (platform == null) {
-      platform = getPontentialPlatformExt(entryPath);
+      platform = getPlatformExtension(entryPath);
       if (platform == null || this._opts.platforms.indexOf(platform) === -1) {
         platform = null;
       }
@@ -198,10 +199,31 @@ class DependencyGraph {
       return;
     }
 
-    this._loading = this._loading.then(
-      () => this._hasteMap.processFileChange(type, absPath)
-    );
+    // Ok, this is some tricky promise code. Our requirements are:
+    // * we need to report back failures
+    // * failures shouldn't block recovery
+    // * Errors can leave `hasteMap` in an incorrect state, and we need to rebuild
+    // After we process a file change we record any errors which will also be
+    // reported via the next request. On the next file change, we'll see that
+    // we are in an error state and we should decide to do a full rebuild.
+    this._loading = this._loading.finally(() => {
+      if (this._hasteMapError) {
+        console.warn(
+          'Rebuilding haste map to recover from error:\n' +
+          this._hasteMapError.stack
+        );
+        this._hasteMapError = null;
+
+        // Rebuild the entire map if last change resulted in an error.
+        this._loading = this._hasteMap.build();
+      } else {
+        this._loading = this._hasteMap.processFileChange(type, absPath);
+        this._loading.catch((e) => this._hasteMapError = e);
+      }
+      return this._loading;
+    });
   }
+
 }
 
 function NotFoundError() {

@@ -38,10 +38,12 @@ var TitleBarForHome = React.createClass({
   },
 
   render: function() {
-    return (
+    return ( 
       <View>
       <View style={styles.container}>
-        <TouchableElement onPress={this.props.onMenuClicked}>
+        <TouchableElement 
+            background={TouchableNativeFeedback.SelectableBackground()}
+            onPress={this.props.onMenuClicked}>
             <View style={styles.actionItem}>
               <Image
                 style={styles.searchButton}
@@ -54,7 +56,9 @@ var TitleBarForHome = React.createClass({
         </Text>
         <View style={{flex: 1}}>
         </View>
-        <TouchableElement onPress={this._onPressSearchButton}>
+        <TouchableElement 
+            background={TouchableNativeFeedback.SelectableBackground()}
+            onPress={this._onPressSearchButton}>
             <View style={styles.actionItem}>
               <Image
                 style={styles.searchButton}

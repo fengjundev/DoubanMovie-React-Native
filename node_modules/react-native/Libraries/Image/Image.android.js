@@ -22,10 +22,10 @@ var StyleSheet = require('StyleSheet');
 var StyleSheetPropType = require('StyleSheetPropType');
 var View = require('View');
 
-var createReactNativeComponentClass = require('createReactNativeComponentClass');
 var flattenStyle = require('flattenStyle');
 var invariant = require('invariant');
 var merge = require('merge');
+var requireNativeComponent = require('requireNativeComponent');
 var resolveAssetSource = require('resolveAssetSource');
 
 /**
@@ -54,18 +54,27 @@ var resolveAssetSource = require('resolveAssetSource');
 var ImageViewAttributes = merge(ReactNativeViewAttributes.UIView, {
   src: true,
   resizeMode: true,
+  progressiveRenderingEnabled: true,
+  fadeDuration: true,
 });
 
 var Image = React.createClass({
   propTypes: {
-    source: PropTypes.shape({
-      /**
-       * A string representing the resource identifier for the image, which
-       * could be an http address, a local file path, or the name of a static image
-       * resource (which should be wrapped in the `ix` function).
-       */
-      uri: PropTypes.string,
-    }).isRequired,
+    ...View.propTypes,
+    /**
+     * `uri` is a string representing the resource identifier for the image, which
+     * could be an http address, a local file path, or the name of a static image
+     * resource (which should be wrapped in the `require('image!name')` function).
+     */
+    source: PropTypes.oneOfType([
+      PropTypes.shape({
+        uri: PropTypes.string,
+      }),
+      // Opaque type returned by require('./image.jpg')
+      PropTypes.number,
+    ]).isRequired,
+    progressiveRenderingEnabled: PropTypes.bool,
+    fadeDuration: PropTypes.number,
     style: StyleSheetPropType(ImageStylePropTypes),
     /**
      * Used to locate this view in end-to-end tests.
@@ -111,15 +120,21 @@ var Image = React.createClass({
     this._updateViewConfig(nextProps);
   },
 
+  contextTypes: {
+    isInAParentText: React.PropTypes.bool
+  },
+
   render: function() {
     var source = resolveAssetSource(this.props.source);
-    if (source && source.uri) {
-      var isNetwork = source.uri.match(/^https?:/);
-      invariant(
-        !(isNetwork && source.isStatic),
-        'Static image URIs cannot start with "http": "' + source.uri + '"'
-      );
 
+    // As opposed to the ios version, here it render `null`
+    // when no source or source.uri... so let's not break that.
+
+    if (source && source.uri === '') {
+      console.warn('source.uri should not be an empty string');
+    }
+
+    if (source && source.uri) {
       var {width, height} = source;
       var style = flattenStyle([{width, height}, styles.base, this.props.style]);
 
@@ -141,7 +156,11 @@ var Image = React.createClass({
           </View>
         );
       } else {
-        return <RKImage {...nativeProps}/>;
+        if (this.context.isInAParentText) {
+          return <RCTTextInlineImage {...nativeProps}/>;
+        } else {
+          return <RKImage {...nativeProps}/>;
+        }
       }
     }
     return null;
@@ -161,9 +180,15 @@ var styles = StyleSheet.create({
   }
 });
 
-var RKImage = createReactNativeComponentClass({
-  validAttributes: ImageViewAttributes,
-  uiViewClassName: 'RCTImageView',
-});
+var cfg = {
+  nativeOnly: {
+    src: true,
+    defaultImageSrc: true,
+    imageTag: true,
+    progressHandlerRegistered: true,
+  },
+};
+var RKImage = requireNativeComponent('RCTImageView', Image, cfg);
+var RCTTextInlineImage = requireNativeComponent('RCTTextInlineImage', Image, cfg);
 
 module.exports = Image;

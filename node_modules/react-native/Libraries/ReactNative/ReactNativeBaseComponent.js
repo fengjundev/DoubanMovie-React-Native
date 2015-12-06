@@ -12,17 +12,15 @@
 'use strict';
 
 var NativeMethodsMixin = require('NativeMethodsMixin');
+var ReactNativeAttributePayload = require('ReactNativeAttributePayload');
 var ReactNativeEventEmitter = require('ReactNativeEventEmitter');
 var ReactNativeStyleAttributes = require('ReactNativeStyleAttributes');
 var ReactNativeTagHandles = require('ReactNativeTagHandles');
+var ReactNativeViewPool = require('ReactNativeViewPool');
 var ReactMultiChild = require('ReactMultiChild');
 var RCTUIManager = require('NativeModules').UIManager;
 
-var styleDiffer = require('styleDiffer');
 var deepFreezeAndThrowOnMutationInDev = require('deepFreezeAndThrowOnMutationInDev');
-var diffRawProperties = require('diffRawProperties');
-var flattenStyle = require('flattenStyle');
-var precomputeStyle = require('precomputeStyle');
 var warning = require('warning');
 
 var registrationNames = ReactNativeEventEmitter.registrationNames;
@@ -91,6 +89,7 @@ ReactNativeBaseComponent.Mixin = {
   unmountComponent: function() {
     deleteAllListeners(this._rootNodeID);
     this.unmountChildren();
+    ReactNativeViewPool.release(this);
     this._rootNodeID = null;
   },
 
@@ -131,63 +130,6 @@ ReactNativeBaseComponent.Mixin = {
     }
   },
 
-
-  /**
-   * Beware, this function has side effect to store this.previousFlattenedStyle!
-   *
-   * @param {!object} prevProps Previous properties
-   * @param {!object} nextProps Next properties
-   * @param {!object} validAttributes Set of valid attributes and how they
-   *                  should be diffed
-   */
-  computeUpdatedProperties: function(prevProps, nextProps, validAttributes) {
-    if (__DEV__) {
-      for (var key in nextProps) {
-        if (nextProps.hasOwnProperty(key) &&
-            nextProps[key] &&
-            validAttributes[key]) {
-          deepFreezeAndThrowOnMutationInDev(nextProps[key]);
-        }
-      }
-    }
-
-    var updatePayload = diffRawProperties(
-      null, // updatePayload
-      prevProps,
-      nextProps,
-      validAttributes
-    );
-
-    for (var key in updatePayload) {
-      var process = validAttributes[key] && validAttributes[key].process;
-      if (process) {
-        updatePayload[key] = process(updatePayload[key]);
-      }
-    }
-
-    // The style property is a deeply nested element which includes numbers
-    // to represent static objects. Most of the time, it doesn't change across
-    // renders, so it's faster to spend the time checking if it is different
-    // before actually doing the expensive flattening operation in order to
-    // compute the diff.
-    if (styleDiffer(nextProps.style, prevProps.style)) {
-      var nextFlattenedStyle = precomputeStyle(
-        flattenStyle(nextProps.style),
-        this.viewConfig.validAttributes
-      );
-      updatePayload = diffRawProperties(
-        updatePayload,
-        this.previousFlattenedStyle,
-        nextFlattenedStyle,
-        ReactNativeStyleAttributes
-      );
-      this.previousFlattenedStyle = nextFlattenedStyle;
-    }
-
-    return updatePayload;
-  },
-
-
   /**
    * Updates the component's currently mounted representation.
    *
@@ -200,7 +142,11 @@ ReactNativeBaseComponent.Mixin = {
     var prevElement = this._currentElement;
     this._currentElement = nextElement;
 
-    var updatePayload = this.computeUpdatedProperties(
+    if (__DEV__) {
+      deepFreezeAndThrowOnMutationInDev(this._currentElement.props);
+    }
+
+    var updatePayload = ReactNativeAttributePayload.diff(
       prevElement.props,
       nextElement.props,
       this.viewConfig.validAttributes
@@ -260,22 +206,7 @@ ReactNativeBaseComponent.Mixin = {
   mountComponent: function(rootID, transaction, context) {
     this._rootNodeID = rootID;
 
-    var tag = ReactNativeTagHandles.allocateTag();
-
-    this.previousFlattenedStyle = {};
-    var updatePayload = this.computeUpdatedProperties(
-      {}, // previous props
-      this._currentElement.props, // next props
-      this.viewConfig.validAttributes
-    );
-
-    var nativeTopRootID = ReactNativeTagHandles.getNativeTopRootIDFromNodeID(rootID);
-    RCTUIManager.createView(
-      tag,
-      this.viewConfig.uiViewClassName,
-      nativeTopRootID ? ReactNativeTagHandles.rootNodeIDToTag[nativeTopRootID] : null,
-      updatePayload
-    );
+    var tag = ReactNativeViewPool.acquire(this);
 
     this._registerListenersUponCreation(this._currentElement.props);
     this.initializeChildren(

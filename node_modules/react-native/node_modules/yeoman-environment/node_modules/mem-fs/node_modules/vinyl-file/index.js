@@ -28,7 +28,7 @@ exports.read = function (pth, opts, cb) {
 			cwd: cwd,
 			base: base,
 			path: pth,
-			stat: stat,
+			stat: stat
 		});
 
 		if (opts.read === false) {

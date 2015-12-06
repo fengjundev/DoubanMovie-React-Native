@@ -9,7 +9,7 @@ var helpText = ['Usage',
 '  width : 145',
 ''].join('\n');
 
-function showSize() {
+function showSize () {
   var size = require('./');
   console.log('height: ' + size.height);
   console.log('width : ' + size.width);
@@ -21,7 +21,7 @@ if (process.argv.length > 2) {
     case '--help':
     case '-h':
       console.log(helpText);
-    break;
+      break;
     default:
       showSize();
   }

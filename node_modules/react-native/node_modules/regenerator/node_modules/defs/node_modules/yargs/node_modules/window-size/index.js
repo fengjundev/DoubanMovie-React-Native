@@ -1,3 +1,5 @@
+'use strict';
+
 /*!
  * window-size <https://github.com/jonschlinkert/window-size>
  *
@@ -5,14 +7,14 @@
  * Licensed under the MIT license.
  */
 
-const tty = require('tty');
+var tty = require('tty');
 
-module.exports = (function() {
+module.exports = (function () {
   var width;
   var height;
 
-  if(tty.isatty(1) && tty.isatty(2)) {
-    if(process.stdout.getWindowSize) {
+  if (tty.isatty(1) && tty.isatty(2)) {
+    if (process.stdout.getWindowSize) {
       width = process.stdout.getWindowSize(1)[0];
       height = process.stdout.getWindowSize(1)[1];
     } else if (tty.getWindowSize) {
@@ -23,7 +25,7 @@ module.exports = (function() {
       width = process.stdout.rows;
     }
   } else {
-    new Error('window-size could not get size with tty or process.stdout.');
+    Error('window-size could not get size with tty or process.stdout.');
   }
 
   return {height: height, width: width};

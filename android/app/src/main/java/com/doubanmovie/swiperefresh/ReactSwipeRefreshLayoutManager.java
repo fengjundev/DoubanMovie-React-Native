@@ -17,12 +17,10 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
-/**
- * Created by Jing on 15/9/30.
- */
+
 public class ReactSwipeRefreshLayoutManager extends ViewGroupManager<ReactSwipeRefreshLayout> {
 
-    private static final String REACT_CLASS = "AndroidSwipeRefreshLayout";
+    private static final String REACT_CLASS = "SwipeRefreshLayout";
     private static final String TAG = "NativeView";
 
     public static final int START_REFRESH = 1;
@@ -74,7 +72,7 @@ public class ReactSwipeRefreshLayoutManager extends ViewGroupManager<ReactSwipeR
     @Override
     public Map getExportedCustomDirectEventTypeConstants() {
         return MapBuilder.of(
-                RefreshEvent.EVENT_NAME, MapBuilder.of("registrationName", "onRefresh"));
+                RefreshEvent.EVENT_NAME, MapBuilder.of("registrationName", "onRefreshing"));
     }
 
     @Override

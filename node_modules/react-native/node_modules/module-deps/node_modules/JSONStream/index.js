@@ -1,5 +1,7 @@
 #! /usr/bin/env node
 
+'use strict'
+
 var Parser = require('jsonparse')
   , through = require('through')
 
@@ -176,8 +178,8 @@ exports.stringifyObject = function (op, sep, cl, indent) {
   //else, what ever you like
 
   var first = true
-    , anyData = false
-  stream = through(function (data) {
+  var anyData = false
+  var stream = through(function (data) {
     anyData = true
     var json = JSON.stringify(data[0]) + ':' + JSON.stringify(data[1], null, indent)
     if(first) { first = false ; this.queue(op + json)}

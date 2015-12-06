@@ -34,13 +34,13 @@ var SwipeRefreshLayoutAndroid = React.createClass({
         {this.props.children}
       </View>;
     return (
-      <AndroidSwipeRefreshLayout
+      <SwipeRefreshLayout
         {...this.props}
         ref={RK_SWIPE_REF}
         style={styles.base}
-        onRefresh={this._onRefresh}>
+        onRefreshing={this._onRefresh}>
         {childrenWrapper}
-      </AndroidSwipeRefreshLayout>
+      </SwipeRefreshLayout>
     );
   },
 
@@ -53,7 +53,7 @@ var SwipeRefreshLayoutAndroid = React.createClass({
   startRefresh: function() {
     RCTUIManager.dispatchViewManagerCommand(
       this._getSwipeRefreshLayoutHandle(),
-      RCTUIManager.AndroidSwipeRefreshLayout.Commands.startRefresh,
+      RCTUIManager.SwipeRefreshLayout.Commands.startRefresh,
       null
     );
   },
@@ -61,7 +61,7 @@ var SwipeRefreshLayoutAndroid = React.createClass({
   finishRefresh: function() {
     RCTUIManager.dispatchViewManagerCommand(
       this._getSwipeRefreshLayoutHandle(),
-      RCTUIManager.AndroidSwipeRefreshLayout.Commands.finishRefresh,
+      RCTUIManager.SwipeRefreshLayout.Commands.finishRefresh,
       null
     );
   },
@@ -84,9 +84,9 @@ var styles = StyleSheet.create({
   },
 });
 
-var AndroidSwipeRefreshLayout = createReactNativeComponentClass({
+var SwipeRefreshLayout = createReactNativeComponentClass({
   validAttributes: ReactNativeViewAttributes.UIView,
-  uiViewClassName: 'AndroidSwipeRefreshLayout',
+  uiViewClassName: 'SwipeRefreshLayout',
 });
 
 module.exports = SwipeRefreshLayoutAndroid;

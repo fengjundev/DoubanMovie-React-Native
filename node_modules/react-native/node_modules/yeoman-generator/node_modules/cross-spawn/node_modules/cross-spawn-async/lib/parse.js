@@ -90,16 +90,13 @@ function parseCall(command, args, options) {
 
     if (isWin) {
         // Detect & add support for shebangs
-        // Note that if we were able to resolve the command, we skip this step entirely
         file = resolveCommand(command);
+        file = file || resolveCommand(command, true);
+        shebang = file && readShebang(file);
 
-        if (!file) {
-            file = resolveCommand(command, true);
-            shebang = file && readShebang(file);
-            if (shebang) {
-                args.unshift(file);
-                command = shebang;
-            }
+        if (shebang) {
+            args.unshift(file);
+            command = shebang;
         }
 
         // Escape command & arguments

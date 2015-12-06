@@ -7,7 +7,7 @@
 
 ## Install
 
-```sh
+```
 $ npm install --save github-username
 ```
 
@@ -39,18 +39,18 @@ Email address for the user of whom you want the username.
 
 Type: `string`  
 
-GitHub [personal access token](https://github.com/settings/applications#personal-access-tokens).
+GitHub [personal access token](https://github.com/settings/tokens/new).
 
 #### callback(err, username)
 
 
 ## CLI
 
-```sh
+```
 $ npm install --global github-username
 ```
 
-```sh
+```
 $ github-username --help
 
   Usage

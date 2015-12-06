@@ -17,6 +17,8 @@ var {
     Platform,
 } = React;
 
+var dismissKeyboard = require('dismissKeyboard');
+
 var SearchResultScreen = require('./SearchResultScreen');
 var deviceWidth = Dimensions.get('window').width;
 
@@ -44,6 +46,7 @@ var SearchScreen = React.createClass({
   onBackPress: function() {
     if (this.props.navigator) {
       this.props.navigator.pop();
+      dismissKeyboard();
     }
   },
 
@@ -51,6 +54,7 @@ var SearchScreen = React.createClass({
     if(!this.state.text || this.state.text === ""){
       ToastAndroid.show("请输入关键字", ToastAndroid.SHORT);
     }else{
+      dismissKeyboard();
       if(this.props.navigator){
         this.props.navigator.push({
             keyword: this.state.text,

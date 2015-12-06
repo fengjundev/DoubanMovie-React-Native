@@ -27,14 +27,16 @@ RCT_EXPORT_MODULE()
 RCT_EXPORT_METHOD(getScriptText:(RCTResponseSenderBlock)successCallback
                   failureCallback:(RCTResponseErrorBlock)failureCallback)
 {
-  if (RCT_DEV && self.scriptText && self.scriptURL) {
-    successCallback(@[@{@"text": self.scriptText, @"url": self.scriptURL.absoluteString}]);
+  if (RCT_DEV && self.scriptData && self.scriptURL) {
+    NSString *scriptText = [[NSString alloc] initWithData:self.scriptData encoding:NSUTF8StringEncoding];
+
+    successCallback(@[@{@"text": scriptText, @"url": self.scriptURL.absoluteString}]);
   } else {
     failureCallback(RCTErrorWithMessage(@"Source code is not available"));
   }
 }
 
-- (NSDictionary *)constantsToExport
+- (NSDictionary<NSString *, id> *)constantsToExport
 {
   NSString *URL = self.bridge.bundleURL.absoluteString ?: @"";
   return @{@"scriptURL": URL};

@@ -37,7 +37,7 @@ typedef struct {
 
 + (RCTLocationOptions)RCTLocationOptions:(id)json
 {
-  NSDictionary *options = [RCTConvert NSDictionary:json];
+  NSDictionary<NSString *, id> *options = [RCTConvert NSDictionary:json];
   return (RCTLocationOptions){
     .timeout = [RCTConvert NSTimeInterval:options[@"timeout"]] ?: INFINITY,
     .maximumAge = [RCTConvert NSTimeInterval:options[@"maximumAge"]] ?: INFINITY,
@@ -47,7 +47,7 @@ typedef struct {
 
 @end
 
-static NSDictionary *RCTPositionError(RCTPositionErrorCode code, NSString *msg /* nil for default */)
+static NSDictionary<NSString *, id> *RCTPositionError(RCTPositionErrorCode code, NSString *msg /* nil for default */)
 {
   if (!msg) {
     switch (code) {
@@ -99,8 +99,8 @@ static NSDictionary *RCTPositionError(RCTPositionErrorCode code, NSString *msg /
 @implementation RCTLocationObserver
 {
   CLLocationManager *_locationManager;
-  NSDictionary *_lastLocationEvent;
-  NSMutableArray *_pendingRequests;
+  NSDictionary<NSString *, id> *_lastLocationEvent;
+  NSMutableArray<RCTLocationRequest *> *_pendingRequests;
   BOOL _observingLocation;
   RCTLocationOptions _observerOptions;
 }
@@ -249,7 +249,8 @@ RCT_EXPORT_METHOD(getCurrentPosition:(RCTLocationOptions)options
 
 #pragma mark - CLLocationManagerDelegate
 
-- (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations
+- (void)locationManager:(CLLocationManager *)manager
+     didUpdateLocations:(NSArray<CLLocation *> *)locations
 {
   // Create event
   CLLocation *location = locations.lastObject;
@@ -284,14 +285,17 @@ RCT_EXPORT_METHOD(getCurrentPosition:(RCTLocationOptions)options
     [_locationManager stopUpdatingLocation];
   }
 
-  // Reset location accuracy
-  _locationManager.desiredAccuracy = RCT_DEFAULT_LOCATION_ACCURACY;
+  // Reset location accuracy if desiredAccuracy is changed.
+  // Otherwise update accuracy will force triggering didUpdateLocations, watchPosition would keeping receiving location updates, even there's no location changes.
+  if (ABS(_locationManager.desiredAccuracy - RCT_DEFAULT_LOCATION_ACCURACY) > 0.000001) {
+    _locationManager.desiredAccuracy = RCT_DEFAULT_LOCATION_ACCURACY;
+  }
 }
 
 - (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
 {
   // Check error type
-  NSDictionary *jsError = nil;
+  NSDictionary<NSString *, id> *jsError = nil;
   switch (error.code) {
     case kCLErrorDenied:
       jsError = RCTPositionError(RCTPositionErrorDenied, nil);
@@ -318,8 +322,11 @@ RCT_EXPORT_METHOD(getCurrentPosition:(RCTLocationOptions)options
   }
   [_pendingRequests removeAllObjects];
 
-  // Reset location accuracy
-  _locationManager.desiredAccuracy = RCT_DEFAULT_LOCATION_ACCURACY;
+  // Reset location accuracy if desiredAccuracy is changed.
+  // Otherwise update accuracy will force triggering didUpdateLocations, watchPosition would keeping receiving location updates, even there's no location changes.
+  if (ABS(_locationManager.desiredAccuracy - RCT_DEFAULT_LOCATION_ACCURACY) > 0.000001) {
+    _locationManager.desiredAccuracy = RCT_DEFAULT_LOCATION_ACCURACY;
+  }
 }
 
 - (void)checkLocationConfig
