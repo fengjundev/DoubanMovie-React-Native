@@ -1,10 +1,22 @@
 # DoubanMovie-React-Native
 
+> Contact me : fengjun.dev@gmail.com
+
+
+## Update Log
+- *12-06* Support movie searching
+- *12-01* Support iOS
+
 ## How does it look like ?
 
-![](./screenshot/screenshot-2.png)  
+<img src="./screenshot/1.png" width="50%" height="50%">
+<img src="./screenshot/2.png" width="50%" height="50%">
+<img src="./screenshot/3.png" width="50%" height="50%">
+<img src="./screenshot/4.png" width="50%" height="50%">
+<img src="./screenshot/5.png" width="50%" height="50%">
+<img src="./screenshot/6.png" width="50%" height="50%">
+<img src="./screenshot/7.png" width="50%" height="50%">
 
-![](./screenshot/screenshot-1.png)
 
 ## How to run ? 
 
@@ -15,5 +27,4 @@
 		 `react-native run-android`
 
 
-## Update Log
-- *12-01* Support iOS
+
