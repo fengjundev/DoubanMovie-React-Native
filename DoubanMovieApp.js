@@ -18,6 +18,12 @@ var {
 
 var HomeScreen = require('./HomeScreen');
 var DetailScreen = require('./DetailScreen');
+var SplashScreen = require('./SplashScreen');
+var SearchScreen = require('./SearchScreen');
+var SearchResultScreen = require('./SearchResultScreen');
+
+var TimerMixin = require('react-timer-mixin');
+
 
 var _navigator;
 
@@ -38,19 +44,49 @@ var RouteMapper = function(route, navigationOperations, onComponentRef){
               navigator={navigationOperations}
               movie={route.movie} 
               title={route.title}/>
+  }else if(route.name === 'search'){
+     return <SearchScreen 
+              navigator={navigationOperations}/>
+  }else if(route.name === 'result'){
+     return <SearchResultScreen 
+              navigator={navigationOperations}
+              keyword={route.keyword} />
   }
 };
 
 var DoubanMovieApp = React.createClass({
+  
+  mixins: [TimerMixin],
+
+  getInitialState: function() {
+     return {
+        splashed: false,
+     };
+  },
+
+  componentDidMount: function() {
+    this.setTimeout(
+      () => {
+        this.setState({splashed: true});
+      },
+      4000,
+    );
+  },
+
   render: function() {
     var initialRoute = {name: 'home'};
-    return (
-      <Navigator
-        style = {styles.container}
-        initialRoute = {initialRoute}
-        configureScreen = {() => Navigator.SceneConfigs.FloatFromRight}
-        renderScene={RouteMapper} />
-    );
+
+    if(!this.state.splashed){
+      return ( <SplashScreen /> );
+    }else{
+      return (
+       <Navigator
+          style = {styles.container}
+          initialRoute = {initialRoute}
+          configureScreen = {(route) => Navigator.SceneConfigs.FloatFromRight}
+          renderScene={RouteMapper} />
+      );
+    }
   }
 });
 

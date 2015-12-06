@@ -34,7 +34,7 @@ if (Platform.OS === 'ios') {
       console.log('============ ProgressViewIOS');
 }
 
-var InTheatersPage = React.createClass({
+var HotMovieList = React.createClass({
 
     getInitialState: function() {
         return {
@@ -79,7 +79,7 @@ var InTheatersPage = React.createClass({
               this.swipeRefreshLayout.finishRefresh();
             }
       }).done();
-    },
+  },
 
   getDataSource: function(subjects: Array<any>): ListView.DataSource {
         return this.state.dataSource.cloneWithRows(subjects);
@@ -134,11 +134,13 @@ var InTheatersPage = React.createClass({
   },
 
   selectMovie: function(movie){
-    this.props.navigator.push({
+    if(this.props.navigator){
+      this.props.navigator.push({
         title: movie.title,
         name: 'detail',
         movie: movie,
-    });
+      });
+    }
   },
 
   renderLoadingView: function(){
@@ -202,4 +204,4 @@ var styles = StyleSheet.create({
   },
 });
 
-module.exports = InTheatersPage;
+module.exports = HotMovieList;

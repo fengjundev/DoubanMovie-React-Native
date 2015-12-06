@@ -27,3 +27,37 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.0.1'
     compile 'com.facebook.react:react-native:0.13.+'
 }
+
+// download js bundle file into assets folder
+
+// if you need to release app , turn to true
+final def NEED_COPY_TO_ASSETS = true;
+
+final def TARGET_BUNDLE_DIR = 'app/src/main/assets/'
+final def TARGET_BUNDLE_FILE = 'index.android.bundle'
+final def DOWNLOAD_URL = 'http://localhost:8081/index.android.bundle?platform=android&dev=false&minify=true'
+
+
+task downloadJSBundle << {
+
+    if(!NEED_COPY_TO_ASSETS){
+        return;
+    }
+
+    def dir = new File(TARGET_BUNDLE_DIR)
+    if (!dir.exists()) {
+        dir.mkdirs()
+    }
+    def f = new File(TARGET_BUNDLE_DIR + TARGET_BUNDLE_FILE)
+    if (f.exists()) {
+        f.delete()
+    }
+    try {
+        new URL(DOWNLOAD_URL).withInputStream{ i -> f.withOutputStream{ it << i }}
+    } catch (Exception e) {
+        e.printStackTrace()
+    }
+
+}
+
+preBuild.dependsOn downloadJSBundle

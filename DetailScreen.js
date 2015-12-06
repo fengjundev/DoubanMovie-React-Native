@@ -19,7 +19,7 @@ var ProgressBar = require('ProgressBarAndroid');
 var toolbarActions = [];
 var coverWidth = Dimensions.get('window').width / 2.2;
 var coverHeight = Dimensions.get('window').height / 2.5;
-var TitleBar = require('./TitleBar');
+var TitleBar = require('./TitleBarForDetail');
 
 var DetailScreen = React.createClass({
 
@@ -86,9 +86,9 @@ var DetailScreen = React.createClass({
   		}
   		return(
   			<View style={styles.outSideContainer}>
-  			<TitleBar title={this.props.movie.title} />
-            <View style={styles.titleBarSplitLine}/>
-  			<ScrollView style={styles.detailContainer} >
+  			<TitleBar title={this.props.movie.title} navigator={this.props.navigator}/>
+  			<ScrollView style={styles.detailContainer}
+          showsVerticalScrollIndicator={false} >
   				<View style={styles.detailContainerAbove}>
   					<Image style={styles.bigCover}
   						source={{uri: this.props.movie.images.large}}/>
